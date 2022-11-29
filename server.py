@@ -1,8 +1,4 @@
-# create a flask server that runs a bash command if a page is accessed with the correct token
-# the token is the name of the container that is running the server
-# the bash command runs a docker command to start a new container
-# the new container is the same as the one the server is running in, but with a different name
-# the new container is then started and the server is stopped
+
 
 from flask import Flask, request
 import subprocess
