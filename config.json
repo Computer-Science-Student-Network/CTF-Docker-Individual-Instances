@@ -1,7 +1,7 @@
 {
     "key": "CHANGETHIS",
     "location": "example.com",
-    "port": 80,
+    "port": 8888,
     "live_time": 30,
     "panic_threshold": 50
 }

@@ -16,6 +16,9 @@ with open('config.json') as json_file:
 with open('image_map.json') as json_file:
     image_map = json.load(json_file)
 
+with open('log.log', 'a') as f:
+    f.write("Loaded Config: " + str(config) + '\nLoaded image map: ' + str(image_map) )
+
 ports = []
 running_images = []
 
@@ -37,7 +40,10 @@ def launch(image):
             f.write("Image missing from map: " + image )
         return "The spesified image is not in the map. Please report this to the administrator"
     #check to see if the image is in the docker image list
-    if image not in subprocess.check_output("docker images", shell=True).decode("utf-8"):
+    try:
+        client.images.get(image_map[image])
+    except:
+        #client.images.get(image_map['image'])
         #log the error
         with open('log.log', 'a') as f:
             f.write("Image missing from docker: " + image )
@@ -49,18 +55,18 @@ def launch(image):
         port = random.randint(10000, 60000)
     #add the port to the list of used ports
     ports.append(port)
-    running_images.append(image + str(port))
+    running_images.append('d-' + image + str(port))
     
     # run the docker run command to run a built image
-    docker.run(image_map[image], detach=True, ports={str(port): '22'}, name=image + str(port), remove=True)    
+    client.containers.run(image_map[image], detach=True, ports={'80':str(port)}, name='d-'+ image + str(port), remove=True)    
     # log the start of the image
     with open('log.log', 'a') as f:
         f.write("Started " + image + str(port) + "at time " + str(time.time()) )
     # wait for the container to start
-    time.sleep(30)
+    #time.sleep(30)
     #redirect to the new container
-    return "Redirecting to your new container", 302, {f'Location': f"http://{config['location']}:" + str(port)}
-
+    #return "Redirecting to your new container", 302, {f'Location': f"http://{config['location']}:" + str(port)}
+    return f"Your image will launch at http://{config['location']}:{str(port)}. Please be paitent as it will take a few minuites to start"
 @app.route('/clean', methods=['GET'])
 def clean():
     if len(running_images) > config['panic_threshold']:
@@ -89,7 +95,7 @@ def flush(key):
         with open('log.log', 'a') as f:
             f.write("Flushed all containers at time " + str(time.time()) )
     
-        for i in running_images:
+        for i in running_images.copy():
             client.containers.get(i).stop()
             # log the stop of the image
             with open('log.log', 'a') as f:
